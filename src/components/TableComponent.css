@@ -1,0 +1,13 @@
+/* TableComponent.css */
+.even-row {
+    background-color: #f0f0f0; /* Warna abu-abu atau sesuaikan dengan keinginan Anda */
+  }
+  
+  .odd-row {
+    background-color: #ffffff; /* Warna putih atau sesuaikan dengan keinginan Anda */
+  }
+  .table{
+    /* padding: 10; */
+    background-color: #ffffff;
+    border-radius: 7px;
+  }
