@@ -11,13 +11,12 @@ import {
   message,
 } from "antd";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   getAllUnitBusinessCategory,
-  storeUnitBusiness,
+  updateUnitBusiness,
 } from "../../services/unitBusiness";
 import { RiAddLine } from "react-icons/ri";
-import SuksesConfirmationModal from "../../components/modalSuccessComponent";
 const { Option } = Select;
 
 const getBase64 = (img, callback) => {
@@ -26,66 +25,23 @@ const getBase64 = (img, callback) => {
   reader.readAsDataURL(img);
 };
 
-const TambahUnitBusiness = () => {
-  const [value, setValue] = useState("");
-  const navigate = useNavigate();
+const EditUnitBusiness = () => {
+  const location = useLocation();
+  const record = location.state.record;
   const [form] = Form.useForm();
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [previewimage, setPreviewImage] = useState(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const handleChange = (selectedValue) => {
-    setValue(selectedValue);
-  };
-
-  const handleSubmitPengguna = async () => {
-    try {
-      const {
-        business_unit_name,
-        id_business_unit_categories,
-        address,
-        photo,
-        phone,
-      } = form.getFieldsValue(); // Mendapatkan nilai dari seluruh field
-
-      setIsLoading(true);
-      // console.log(form.getFieldValue)
-
-      const status = "active";
-
-      const f = new FormData();
-      f.append("address", address);
-      f.append("business_unit_name", business_unit_name);
-      f.append("id_business_unit_categories", id_business_unit_categories);
-      f.append("phone", phone);
-      f.append("status", status);
-      if (photo) {
-        f.append("photo", photo.file);
-      }
-
-      const response = await storeUnitBusiness(f);
-
-      console.log("res", response);
-
-      setIsLoading(false);
-
-      if (response.status !== "success") {
-        message.error("gagal menambah data");
-        return;
-      }
-
-      setIsModalVisible(true);
-    } catch (error) {
-      console.error("Terjadi kesalahan:", error);
-    }
-  };
-  const handleRemove = () => {
-    setPreviewImage(null);
-  };
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     getData();
+    form.setFieldsValue({
+      business_unit_name: record.business_unit_name,
+      id_business_unit_categories: record.id_business_unit_categories,
+      address: record.address,
+      phone: record.phone,
+      photo: record.image, // Gunakan properti image dari record untuk nilai awal photo
+    });
   }, []);
 
   const getData = async () => {
@@ -102,6 +58,58 @@ const TambahUnitBusiness = () => {
     }
   };
 
+  const handleSubmit = async () => {
+    try {
+      const {
+        business_unit_name,
+        id_business_unit_categories,
+        address,
+        phone,
+        photo,
+      } = form.getFieldsValue();
+
+      setIsLoading(true);
+
+      const status = "active";
+
+      const formData = new FormData();
+      formData.append("business_unit_name", business_unit_name);
+      formData.append(
+        "id_business_unit_categories",
+        id_business_unit_categories
+      );
+      formData.append("address", address);
+      formData.append("phone", phone);
+      formData.append("status", status);
+      formData.append("photo", photo.file); // Ambil file dari properti photo
+
+      const response = await updateUnitBusiness(formData);
+
+      setIsLoading(false);
+
+      if (response.status !== "success") {
+        message.error("Gagal mengupdate data");
+        return;
+      }
+
+      Modal.success({
+        title: "Data Berhasil Diupdate",
+        content: "Data telah berhasil diupdate.",
+      });
+    } catch (error) {
+      console.error("Terjadi kesalahan:", error);
+    }
+  };
+
+  const handleRemove = () => {
+    setPreviewImage(null);
+    form.setFieldsValue({ photo: undefined }); // Set nilai photo pada form menjadi undefined
+  };
+
+  const handleChange = (value) => {
+    console.log(`selected ${value}`);
+  };
+
   return (
     <>
       <Breadcrumb style={{ marginTop: -30 }} separator=">">
@@ -113,7 +121,7 @@ const TambahUnitBusiness = () => {
         </Breadcrumb.Item>
         <Breadcrumb.Item>
           <Link style={{ fontWeight: 500, color: "black" }}>
-            Tambah Unit Usaha
+            Edit Unit Usaha
           </Link>
         </Breadcrumb.Item>
       </Breadcrumb>
@@ -127,13 +135,13 @@ const TambahUnitBusiness = () => {
               marginTop: 8,
             }}
           >
-            Tambah Unit Usaha
+            Edit Unit Usaha
           </p>
 
           <Button
             type="primary"
             icon={<RiAddLine />}
-            onClick={handleSubmitPengguna}
+            onClick={handleSubmit}
             style={{ marginRight: "20px" }}
           >
             Tambah
@@ -170,7 +178,7 @@ const TambahUnitBusiness = () => {
           <div style={{ width: "90%", margin: "0px auto 0px auto" }}>
             <p style={{ textAlign: "left" }}>Foto Unit Usaha</p>
             <Flex wrap="wrap" gap="small" style={{ alignItems: "center" }}>
-              <Avatar src={previewimage} shape="square" size={96} />
+              <Avatar src={previewImage} shape="square" size={96} />
               <Flex wrap="wrap" gap="small" vertical>
                 <div>
                   <Flex>
@@ -191,7 +199,7 @@ const TambahUnitBusiness = () => {
                       >
                         <Button type="primary">Upload</Button>
                       </Upload>
-                      {previewimage && (
+                      {previewImage && (
                         <Button
                           style={{ marginLeft: 10 }}
                           // icon={<DeleteOutlined />}
@@ -259,15 +267,8 @@ const TambahUnitBusiness = () => {
           </div>
         </div>
       </Form>
-      <SuksesConfirmationModal
-        visible={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          navigate("/unit-business");
-        }}
-        //  deletee={Deletee}
-      />
     </>
   );
 };
-export default TambahUnitBusiness;
+
+export default EditUnitBusiness;

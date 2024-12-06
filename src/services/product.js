@@ -1,9 +1,9 @@
 import axios from '../helper/axios'
-const getAllProduct = async () => {
+const getAllProduct = async (currentPage = 1, perpage = 3) => {
 
     try {
 
-        const response = await axios.get('master/product?page=1&page_size=3&id_business_unit=5c28924d-7c5b-42f5-8ad5-b0de8b346eb9')
+        const response = await axios.get(`master/product?page=${currentPage}&page_size=${perpage}`)
         return response.data
 
     } catch (e) {

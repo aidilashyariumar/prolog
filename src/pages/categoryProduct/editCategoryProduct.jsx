@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Breadcrumb, Button, Flex, Form, Input, Select, message } from "antd";
-import { Link, useLocation } from "react-router-dom";
-import { updateCategoryProduct } from "../../services/categoryProduct";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  getSpesifikCategoryProduct,
+  updateCategoryProduct,
+} from "../../services/categoryProduct";
 import { getAllUnitBusiness } from "../../services/unitBusiness";
 
 const { Option } = Select;
@@ -10,12 +13,11 @@ const EditCategoryProduk = () => {
   const location = useLocation();
   let record = location.state.record;
 
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [form] = Form.useForm();
   const [data, setData] = useState([]);
-  const [selectedUnit, setSelectedUnit] = useState(
-    `${record.id}#${record.id_business_unit}`
-  );
+  const [selectedUnit, setSelectedUnit] = useState(record.id);
   const [categoryName, setCategoryName] = useState("");
 
   useEffect(() => {
@@ -24,6 +26,7 @@ const EditCategoryProduk = () => {
       name: record.name,
       id_business_unit: record.business_unit,
     });
+    fetchDataSpesifik();
   }, []);
 
   const fetchData = async () => {
@@ -35,20 +38,28 @@ const EditCategoryProduk = () => {
     }
   };
 
+  const fetchDataSpesifik = async () => {
+    try {
+      const res = await getSpesifikCategoryProduct();
+      setData(res.data.items);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       const formData = await form.validateFields();
-      const split = selectedUnit.split("#");
-      const id = split[0];
-      const idBusiness = split[1];
+      const idList = selectedUnit;
       const name = formData.name;
 
       setIsLoading(true);
       await updateCategoryProduct({
-        id: id,
-        id_business_unit: idBusiness,
+        id: data.id,
+        id_business_unit: idList,
         name: name,
       });
+      navigate("/category-product");
       message.success("Category product updated successfully");
     } catch (error) {
       const err = error.response.data.message;
@@ -60,14 +71,18 @@ const EditCategoryProduk = () => {
 
   return (
     <div>
-      <Breadcrumb style={{ marginTop: -30 }}>
+      <Breadcrumb style={{ marginTop: -30 }} separator=">">
         <Breadcrumb.Item>
           <Link to="/">Dashboard</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
           <Link to="/category-product">Product</Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item>Edit Kategori Produk</Breadcrumb.Item>
+        <Breadcrumb.Item>
+          <Link style={{ fontWeight: 500, color: "black" }}>
+            Edit Kategori Produk
+          </Link>
+        </Breadcrumb.Item>
       </Breadcrumb>
 
       <Flex justify="space-between">
@@ -98,17 +113,15 @@ const EditCategoryProduk = () => {
             }}
           >
             <Select
-              onChange={(value) => setSelectedUnit(value)}
+              onChange={(value) => {
+                setSelectedUnit(value);
+              }}
               placeholder="Pilih unit usaha"
               style={{ height: 52 }}
               value={selectedUnit}
             >
               {data.map((item) => (
-                <Option
-                  key={item.id}
-                  value={`${item.id}#${item.id_business_unit_categories}`}
-                  defaultValue={item.id}
-                >
+                <Option key={item.id} value={item.id} defaultValue={item.id}>
                   {item.business_unit_name}
                 </Option>
               ))}

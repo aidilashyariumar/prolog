@@ -8,7 +8,7 @@ import { Route} from 'react-router-dom';
         <>
         <Route path="/pengguna" element={<Pengguna />} />
         <Route path="/pengguna/add-pengguna" element={<TambahPengguna />} />
-        <Route path="/pengguna/adit-pengguna/:id" element={<EditPengguna />} />
+        <Route path="/pengguna/edit-pengguna/:id" element={<EditPengguna />} />
         </>
     ];
 

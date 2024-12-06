@@ -1,10 +1,10 @@
 import axios from '../helper/axios'
 
-const getAllPengguna = async () => {
+const getAllPengguna = async (currentPage = 1, perpage = 3) => {
 
     try {
 
-        const response = await axios.get('master/users?page=1&page_size=5')
+        const response = await axios.get(`master/users?page=${currentPage}&page_size=${perpage}`)
         return response.data
 
     } catch (e) {

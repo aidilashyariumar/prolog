@@ -1,8 +1,18 @@
 import axios from "../helper/axios";
-const getAllCategoryProduct = async () => {
+const getAllCategoryProduct = async (currentPage = 1, perpage = 3) => {
   try {
     const response = await axios.get(
-      "master/product-category?page=1&page_size=3"
+      `master/product-category?page=${currentPage}&page_size=${perpage}`
+    );
+    return response.data;
+  } catch (e) {
+    return e.response.data;
+  }
+};
+const getSpesifikCategoryProduct = async (id) => {
+  try {
+    const response = await axios.get(
+      `master/product-category/${id}`
     );
     return response.data;
   } catch (e) {
@@ -38,4 +48,5 @@ export {
   storeCategoryProduct,
   updateCategoryProduct,
   deleteCategoryProduct,
+  getSpesifikCategoryProduct
 };

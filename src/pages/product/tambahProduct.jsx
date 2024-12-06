@@ -18,7 +18,8 @@ import modalComponent from "../../components/modalComponent";
 import { getAllUnitBusinessCategory } from "../../services/unitBusiness";
 import { getAllCategoryProduct } from "../../services/categoryProduct";
 import "./style.css";
-// import { RiOverline } from "react-icons/ri";
+import useFilePreview from '../hooks/useFilePreview';
+
 const { Option } = Select;
 
 // const getBase64 = (img, callback) => {
@@ -49,10 +50,27 @@ const TambahProduct = () => {
   const [form] = Form.useForm();
   const [value, setValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [previewimage, setPreviewImage] = useState(null);
   const [imageUrl, setImageUrl] = useState();
   const [data, setData] = useState([]);
   const [dataCategory, setDataCategory] = useState([]);
+
+  const [gambar, setGambar] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+
+  const onDrop = (acceptedFiles) => {
+    console.log("Dropped files:", acceptedFiles); // Log dropped files
+
+    setGambar(acceptedFiles[0]);
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => setPreviewImage(reader.result));
+    try {
+      reader.readAsDataURL(acceptedFiles[0]); // Handle potential errors
+    } catch (error) {
+      console.error("Error reading file:", error); // Log error message
+    }
+  };
+
   useEffect(() => {
     getData();
     getDataCategory();
@@ -150,37 +168,14 @@ const TambahProduct = () => {
     }
   };
 
-  const handleChangeUpload = (info) => {
-    if (info.file.status === "uploading") {
-      setIsLoading(true);
-      return;
-    }
-    if (info.file.status === "done") {
-      // Get this url from response in real world.
-      getBase64(info.file.originFileObj, (url) => {
-        setIsLoading(false);
-        setImageUrl(url);
-      });
-    }
-  };
-  const uploadButton = (
-    <button
-      style={{
-        border: 0,
-        background: "none",
-      }}
-      type="button"
-    >
-      {/* {loading ? <LoadingOutlined /> : <PlusOutlined />} */}
-      <div
-        style={{
-          marginTop: 8,
-        }}
-      >
-        Upload
-      </div>
-    </button>
-  );
+    const { Dragger } = Upload;
+    const TambahProduct = ({ addFile, removeFile }) => {
+      const [handlePreview, previewContent] = useFilePreview();
+      const beforeUploadHandler = (file) => {
+        addFile(file);
+        return false;
+      }
+    };
 
   return (
     <>
@@ -189,13 +184,19 @@ const TambahProduct = () => {
           <Link to="/">Dashboard</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to="/pengguna">Pengguna</Link>
+          <Link to="/product">Produk</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to="pengguna/add-pengguna">Tambah Pengguna</Link>
+          <Link to="">Tambah Produk</Link>
         </Breadcrumb.Item>
       </Breadcrumb>
-      <Form name="trigger" form={form} layout="vertical" autoComplete="off">
+      <Form
+        name="trigger"
+        form={form}
+        layout="vertical"
+        autoComplete="off"
+        style={{ maxHeight: "90vh", overflow: "auto" }}
+      >
         <Flex justify="space-between">
           <p
             style={{
@@ -205,7 +206,7 @@ const TambahProduct = () => {
               marginTop: 8,
             }}
           >
-            Tambah Pengguna
+            Tambah Produk
           </p>
 
           <Button type="primary" onClick={handleSubmitPengguna}>
@@ -218,10 +219,12 @@ const TambahProduct = () => {
             <div
               style={{
                 backgroundColor: "white",
+                marginBottom: "20px",
                 borderRadius: 10,
                 maxHeight: "80vh",
-                //   width: "98%",
+                width: "90%",
                 overflow: "auto",
+                padding: " 0px -20px 0px -20px",
               }}
             >
               <p
@@ -241,126 +244,74 @@ const TambahProduct = () => {
                   border: "1px solid #F0F0F0",
                 }}
               />
-              <div style={{ width: "90%", margin: "0px auto 0px auto" }}>
-                <Row>
-                  <Col>
-                    <Form.Item
-                      label="Unit Usaha"
-                      name="id_business_unit_categories"
-                      style={{ marginTop: "-15px" }}
+              <div
+                style={{
+                  width: "890px",
+                  margin: "30px auto 0px auto",
+                }}
+              >
+                <Flex>
+                  <Form.Item
+                    label="Unit Usaha"
+                    name="id_business_unit_categories"
+                    style={{ marginTop: "-15px" }}
+                  >
+                    <Select
+                      onChange={handleChange}
+                      placeholder="pilih category unit usaha"
+                      style={{ width: "430px", marginRight: 10, height: 40 }}
                     >
-                      <Select
-                        onChange={handleChange}
-                        placeholder="pilih category unit usaha"
-                        style={{ width: "397px", marginRight: 10, height: 40 }}
-                      >
-                        {data.map((item) => (
-                          <Option key={item.key} value={item.id}>
-                            {item.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item
-                      label="Kategori"
-                      name="id_business_unit_categories_1"
-                      style={{ marginTop: "-15px" }}
-                    >
-                      <Select
-                        onChange={handleChange}
-                        placeholder="pilih category unit usaha"
-                        style={{ width: "397px", height: 40 }}
-                      >
-                        {data.map((item) => (
-                          <Option key={item.key} value={item.id}>
-                            {item.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
+                      {data.map((item) => (
+                        <Option key={item.key} value={item.id}>
+                          {item.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
 
-                <Row>
-                  <Col>
-                    <Form.Item
-                      label="Username"
-                      name="username"
-                      style={{ marginTop: "-15px" }}
+                  <Form.Item
+                    label="Kategori"
+                    name="id_business_unit_categories_1"
+                    style={{ marginTop: "-15px" }}
+                  >
+                    <Select
+                      onChange={handleChange}
+                      placeholder="pilih category unit usaha"
+                      style={{ width: "430px", height: 40 }}
                     >
-                      <Input
-                        placeholder="Masukkan Username"
-                        style={{ width: "535px", marginRight: 10, height: 40 }}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item
-                      label="Kode Produk"
-                      name="product_code"
-                      style={{ marginTop: "-15px" }}
-                    >
-                      <Input
-                        placeholder="Masukkan Username"
-                        style={{ width: "261px", height: 40 }}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col>
-                    <Form.Item
-                      label="Username"
-                      name="username"
-                      style={{ marginTop: "-15px" }}
-                    >
-                      <Input
-                        placeholder="Masukkan Username"
-                        style={{ width: "261px", marginRight: 10, height: 40 }}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item
-                      label="Kode Produk"
-                      name="product_code"
-                      style={{ marginTop: "-15px" }}
-                    >
-                      <Input
-                        placeholder="Masukkan Username"
-                        style={{ width: "535px", height: 40 }}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col>
-                    <Form.Item
-                      label="Username"
-                      name="username"
-                      style={{ marginTop: "-15px" }}
-                    >
-                      <Input
-                        placeholder="Masukkan Username"
-                        style={{ width: "261px", marginRight: 10, height: 40 }}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item
-                      label="Kode Produk"
-                      name="product_code"
-                      style={{ marginTop: "-15px" }}
-                    >
-                      <Input
-                        placeholder="Masukkan Username"
-                        style={{ width: "535px", height: 40 }}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
+                      {data.map((item) => (
+                        <Option key={item.key} value={item.id}>
+                          {item.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Flex>
+
+                <Flex>
+                  <Form.Item
+                    label="coba"
+                    name="product_code"
+                    style={{ marginTop: "-15px" }}
+                  >
+                    <Input
+                      placeholder="Masukkan Username"
+                      style={{ width: "600px", height: 40, marginRight: 10 }}
+                      className="input-buttom"
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="Username"
+                    name="username"
+                    style={{ marginTop: "-15px" }}
+                  >
+                    <Input
+                      placeholder="Masukkan Username"
+                      style={{ width: "261px", height: 40 }}
+                      className="input-top"
+                    />
+                  </Form.Item>
+                </Flex>
                 <Flex>
                   <Form.Item
                     label="Username"
@@ -380,7 +331,31 @@ const TambahProduct = () => {
                   >
                     <Input
                       placeholder="Masukkan Username"
-                      style={{ width: "535px", height: 40 }}
+                      style={{ width: "600px", height: 40 }}
+                      className="input-buttom"
+                    />
+                  </Form.Item>
+                </Flex>
+                <Flex>
+                  <Form.Item
+                    label="Username"
+                    name="username"
+                    style={{ marginTop: "-15px" }}
+                  >
+                    <Input
+                      placeholder="Masukkan Username"
+                      style={{ width: "261px", marginRight: 10, height: 40 }}
+                      className="input-top"
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="coba"
+                    name="product_code"
+                    style={{ marginTop: "-15px" }}
+                  >
+                    <Input
+                      placeholder="Masukkan Username"
+                      style={{ width: "600px", height: 40 }}
                       className="input-buttom"
                     />
                   </Form.Item>
@@ -394,8 +369,9 @@ const TambahProduct = () => {
                 backgroundColor: "white",
                 borderRadius: 10,
                 maxHeight: "80vh",
-                //   width: "98%",
+                width: "100%",
                 overflow: "auto",
+                marginBottom: 100,
               }}
             >
               <p
@@ -406,7 +382,7 @@ const TambahProduct = () => {
                   fontSize: 20,
                 }}
               >
-                Detail Pengguna
+                Gambar Produk
               </p>
               <hr
                 style={{
@@ -417,28 +393,23 @@ const TambahProduct = () => {
               />
               <Flex>
                 <Form.Item name="photo">
-                  <Upload
-                    name="avatar"
-                    listType="picture-card"
-                    className="avatar-uploader"
-                    showUploadList={false}
-                    action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
-                    beforeUpload={beforeUpload}
-                    onChange={handleChangeUpload}
-                    style={{ width: "600px !importan" }}
-                  >
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt="avatar"
-                        style={{
-                          width: "600px",
-                        }}
-                      />
-                    ) : (
-                      uploadButton
-                    )}
-                  </Upload>
+                <Dragger
+            multiple={true}
+            onRemove={removeFile}
+            showUploadList={true}
+            listType="picture-card"
+            beforeUpload={beforeUploadHandler}
+            onPreview={handlePreview}
+            accept="image/*"
+          >
+            <p className="ant-upload-drag-icon">
+              <PlusOutlined />
+            </p>
+            <p className="ant-upload-text">
+              Click this area or drag files to upload
+            </p>
+          </Dragger>
+          {previewContent}
                 </Form.Item>
               </Flex>
             </div>

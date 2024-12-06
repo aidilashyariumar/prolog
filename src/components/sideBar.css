@@ -1,0 +1,8 @@
+.active > a {
+    color: black !important;
+    font-weight: bold;
+  }
+
+.sidebar .ant-menu-item-selected a {
+  color: #000000 !important;
+}

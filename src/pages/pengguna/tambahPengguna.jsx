@@ -13,11 +13,12 @@ import {
   Upload,
   message,
 } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { storePengguna } from "../../services/pengguna";
-import modalComponent from "../../components/modalComponent";
-
+import { getAllUnitBusiness } from "../../services/unitBusiness";
+import SuksesConfirmationModal from "../../components/modalSuccessComponent";
+const Option = Select;
 const getBase64 = (img, callback) => {
   const reader = new FileReader();
   reader.addEventListener("load", () => callback(reader.result));
@@ -28,8 +29,10 @@ const TambahPengguna = () => {
   const [value, setValue] = useState("");
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [previewimage, setPreviewImage] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleChange = (selectedValue) => {
     setValue(selectedValue);
@@ -89,13 +92,9 @@ const TambahPengguna = () => {
         return;
       }
 
-      message.success(response.message);
-      modalComponent.success({
-        // title: 'Data Berhasil Disimpan',
-        content: 'Data Anda telah disimpan dengan sukses.',
-      });
-      navigate('/pengguna')
-
+      // navigate("/pengguna");
+      setIsModalVisible(true);
+      // message.success(response.message);
     } catch (error) {
       console.error("Terjadi kesalahan:", error);
     }
@@ -104,9 +103,27 @@ const TambahPengguna = () => {
     setPreviewImage(null);
   };
 
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const getData = async () => {
+    try {
+      const bisnisUnit = await getAllUnitBusiness();
+      const dataArray = Object.values(bisnisUnit.data.items);
+      const formattedData = dataArray.map((item, index) => ({
+        ...item,
+        key: index + 1,
+      }));
+      setData(formattedData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   return (
     <>
-      <Breadcrumb style={{ marginTop: -30 }}>
+      <Breadcrumb style={{ marginTop: -30 }} separator=">">
         <Breadcrumb.Item>
           <Link to="/">Dashboard</Link>
         </Breadcrumb.Item>
@@ -114,7 +131,9 @@ const TambahPengguna = () => {
           <Link to="/pengguna">Pengguna</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to="pengguna/add-pengguna">Tambah Pengguna</Link>
+          <Link style={{ fontWeight: 500, color: "black" }}>
+            Tambah Pengguna
+          </Link>
         </Breadcrumb.Item>
       </Breadcrumb>
       <Form name="trigger" form={form} layout="vertical" autoComplete="off">
@@ -169,35 +188,37 @@ const TambahPengguna = () => {
                   <Avatar src={previewimage} size={96} />
                   <Flex wrap="wrap" gap="small" vertical>
                     <div>
-                    <Flex>
-                      <Form.Item name="photo">
-                        <Upload
-                          accept="image/*"
-                          multiple={false}
-                          // maxCount={1}
-                          onRemove={handleRemove}
-                          showUploadList={false}
-                          beforeUpload={(file) => {
-                            getBase64(file, (url) => {
-                              setPreviewImage(url);
-                            });
+                      <Flex>
+                        <Form.Item name="photo">
+                          <Upload
+                            accept="image/*"
+                            multiple={false}
+                            maxCount={1}
+                            onRemove={handleRemove}
+                            showUploadList={false}
+                            beforeUpload={(file) => {
+                              getBase64(file, (url) => {
+                                setPreviewImage(url);
+                              });
 
-                            return false;
-                          }}
-                        >
-                          <Button type="primary">Upload</Button>
-                        </Upload>
-                        {previewimage && (
-                          <Button
-                            // icon={<DeleteOutlined />}
-                            onClick={handleRemove}
+                              return false;
+                            }}
                           >
-                            Hapus
-                          </Button>
-                        )}
-                      </Form.Item>
-                    </Flex>
-                    <p style={{position:'absolute', top:170}}>Gambar harus berukuran 1:1 dengan file PNG/JPEG</p>
+                            <Button type="primary">Upload</Button>
+                          </Upload>
+                          {previewimage && (
+                            <Button
+                              // icon={<DeleteOutlined />}
+                              onClick={handleRemove}
+                            >
+                              Hapus
+                            </Button>
+                          )}
+                        </Form.Item>
+                      </Flex>
+                      <p style={{ position: "absolute", top: 170 }}>
+                        Gambar harus berukuran 1:1 dengan file PNG/JPEG
+                      </p>
                     </div>
                   </Flex>
                 </Flex>
@@ -329,26 +350,23 @@ const TambahPengguna = () => {
                 <Form.Item
                   label="Unit Usaha"
                   name="id_business_unit"
-                  initialValue="61b9139c-86ff-4445-b826-7acc66d94479"
-                  style={{}}
+                  style={{
+                    // padding: 20,
+                    backgroundColor: "#FFFFFF",
+                    marginTop: "-15px",
+                  }}
                 >
                   <Select
                     onChange={handleChange}
-                    options={[
-                      {
-                        value: "f139d9f9-d406-4fc2-92bf-bd660431c2bb",
-                        label: "belawan butik",
-                      },
-                      {
-                        value: "39d8cb82-0d6e-4997-87a3-e116b5e8296f",
-                        label: "Retail",
-                      },
-                      {
-                        value: "8e90f49e-b7d1-4528-ba93-ebc44e44d3a6",
-                        label: "sabun",
-                      },
-                    ]}
-                  />
+                    placeholder="pilih unit usaha"
+                    style={{ height: 40 }}
+                  >
+                    {data.map((item) => (
+                      <Option key={item.key} value={item.id}>
+                        {item.business_unit_name}
+                      </Option>
+                    ))}
+                  </Select>
                 </Form.Item>
 
                 <Flex vertical gap="middle" justifyContent="flex-start">
@@ -366,9 +384,9 @@ const TambahPengguna = () => {
                           border: "1px solid #d9d9d9",
                           padding: "5px 0px 5px 10px",
                         }}
-                        value="7b45bbb4-196b-4785-8159-4515d0935f71"
+                        value="8d74e65b-08b7-4e12-bd70-51264cbe678e"
                         className={
-                          value === "7b45bbb4-196b-4785-8159-4515d0935f71"
+                          value === "8d74e65b-08b7-4e12-bd70-51264cbe678e"
                             ? "select"
                             : ""
                         }
@@ -382,9 +400,9 @@ const TambahPengguna = () => {
                           paddingLeft: 10,
                           padding: "5px 0px 5px 10px",
                         }}
-                        value="6c79898c-cbb9-4874-b745-158ac09849fe"
+                        value="c196bace-ba2d-43f2-b548-af2adb8a10dd"
                         className={
-                          value === "6c79898c-cbb9-4874-b745-158ac09849fe"
+                          value === "c196bace-ba2d-43f2-b548-af2adb8a10dd"
                             ? "select"
                             : ""
                         }
@@ -400,9 +418,9 @@ const TambahPengguna = () => {
                           paddingLeft: 10,
                           padding: "5px 0px 5px 10px",
                         }}
-                        value="6f5ac630-e35f-4b82-82ac-a770660e3755"
+                        value="9a3d4f51-8cf4-4fca-9190-b76170670545"
                         className={
-                          value === "6f5ac630-e35f-4b82-82ac-a770660e3755"
+                          value === "9a3d4f51-8cf4-4fca-9190-b76170670545"
                             ? "select"
                             : ""
                         }
@@ -449,6 +467,14 @@ const TambahPengguna = () => {
           </Col>
         </Row>
       </Form>
+      <SuksesConfirmationModal
+        visible={isModalVisible}
+        onCancel={() => {
+          setIsModalVisible(false);
+          navigate("/pengguna");
+        }}
+        //  deletee={Deletee}
+      />
     </>
   );
 };

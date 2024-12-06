@@ -4,7 +4,6 @@ import {
   Flex,
   Space,
   Table,
-  Popconfirm,
   message,
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
@@ -20,33 +19,106 @@ import {
   deleteCategoryProduct,
   getAllCategoryProduct,
 } from "../../services/categoryProduct";
+import DeleteConfirmationModal from "../../components/modalComponent";
+import PaginationComponent from "../../components/pagination";
 
 const CategoryProduct = () => {
-  const [dataSource, setDataSource] = useState([]);
   const navigate = useNavigate();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [deleteModalRecord, setDeleteModalRecord] = useState(null);
+  const [tableData, setTableData] = useState({
+    items: [],
+    current: 1,
+    pageSize: 5,
+  });
 
   useEffect(() => {
     getData();
   }, []);
 
+  const handleNext = async () => {
+    try {
+      const pengguna = await getAllCategoryProduct(
+        tableData.current + 1,
+        tableData.pageSize,
+        tableData.total
+      );
+      const { items, current, page_size, total } = pengguna.data;
+
+      setTableData({
+        items: items,
+        current,
+        pageSize: page_size,
+        total: total,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handlePrev = async () => {
+    try {
+      const pengguna = await getAllCategoryProduct(
+        tableData.current === 1 ? 1 : tableData.current - 1,
+        tableData.pageSize,
+        tableData.total
+      );
+      const { items, current, page_size, total } = pengguna.data;
+
+      setTableData({
+        items: items,
+        current,
+        pageSize: page_size,
+        total: total,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleChangePage = async (e) => {
+    console.log(e.target.value);
+    try {
+      const pengguna = await getAllCategoryProduct(
+        tableData.current,
+        e.target.value,
+        tableData.total
+      );
+      const { items, current, page_size, total } = pengguna.data;
+
+      setTableData({
+        items: items,
+        current,
+        pageSize: page_size,
+        total: total,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   const getData = async () => {
     try {
       const pengguna = await getAllCategoryProduct();
-      const dataArray = Object.values(pengguna.data.items);
-      const formattedData = dataArray.map((item, index) => ({
-        ...item,
-        key: index + 1,
-      }));
-      setDataSource(formattedData);
+
+      const { items, current, page_size, total } = pengguna.data;
+
+      setTableData({
+        items: items,
+        current,
+        pageSize: page_size,
+        total: total,
+      });
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
     try {
-      await deleteCategoryProduct(id);
-      message.success("Product berhasil dihapus");
+      await deleteCategoryProduct(deleteModalRecord.id);
+      message.success("KategorI Produk berhasil dihapus");
+      setIsModalVisible(false);
       getData();
     } catch (error) {
       console.error("Error deleting pengguna:", error);
@@ -58,13 +130,14 @@ const CategoryProduct = () => {
     {
       title: "No",
       dataIndex: "key",
+      render: (text, record, index) => index + 1,
     },
     {
       title: "UNIT USAHA",
       dataIndex: "business_unit",
     },
     {
-      title: "Kategori Produk",
+      title: "KATEGORI PRODUK",
       dataIndex: "name",
     },
 
@@ -73,30 +146,48 @@ const CategoryProduct = () => {
       dataIndex: "action",
       render: (text, record) => (
         <Space>
-          <Popconfirm
-            title="Apakah Anda yakin ingin menghapus pengguna ini?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Ya"
-            cancelText="Tidak"
-          >
-            <Button
-              type="submit"
-              onClick={handleDelete}
-              icon={<RiDeleteBin6Line />}
-            />
-          </Popconfirm>
           {/* <Link to={`/category-product/edit-category-product/${record.id}`}> */}
+
           <Button
             icon={<RiEdit2Line />}
+            style={{
+              border: "none",
+              backgroundColor: "transparent",
+              boxShadow: "none",
+            }}
             onClick={() =>
-              navigate(`/category-product/edit-category-product/${record.id}`, {
-                state: {
-                  record,
-                },
-              })
+              navigate(
+                `/category-product/edit-category-product/${record.id_business_unit}`,
+                {
+                  state: {
+                    record,
+                  },
+                }
+              )
             }
           />
           {/* </Link> */}
+          <Button
+            style={{
+              border: "none",
+              backgroundColor: "transparent",
+              boxShadow: "none",
+            }}
+            onClick={() => {
+              setIsModalVisible(true); // Buka modal konfirmasi penghapusan
+              setDeleteModalRecord(record); // Simpan data pengguna yang akan dihapus
+            }}
+          >
+            <RiDeleteBin6Line />
+          </Button>
+          <DeleteConfirmationModal
+            visible={isModalVisible}
+            onCancel={() => {
+              setIsModalVisible(false);
+            }}
+            onConfirm={handleDelete}
+            //  deletee={Deletee}
+          ></DeleteConfirmationModal>
         </Space>
       ),
     },
@@ -104,12 +195,14 @@ const CategoryProduct = () => {
 
   return (
     <>
-      <Breadcrumb style={{ marginTop: -30 }}>
+      <Breadcrumb style={{ marginTop: -30 }} separator=">">
         <Breadcrumb.Item>
           <Link to="/">Dashboard</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to="/category-product">Category Product</Link>
+          <Link style={{ fontWeight: 500, color: "black" }}>
+            Category Product
+          </Link>
         </Breadcrumb.Item>
       </Breadcrumb>
 
@@ -144,12 +237,21 @@ const CategoryProduct = () => {
         <Table
           style={{ height: "50vh", overflowY: "auto" }}
           columns={columns}
-          dataSource={dataSource}
+          dataSource={tableData.items}
           rowClassName={(record, index) =>
-            index % 5 === 0 ? "odd-row" : "even-row"
+            index % 2 === 0 ? "odd-row" : "even-row"
           }
+          pagination={false}
         />
       </div>
+      <PaginationComponent
+        current={tableData.current}
+        pageSize={tableData.pageSize}
+        handleNext={handleNext}
+        handlePrev={handlePrev}
+        handleChangePage={handleChangePage}
+        dataCurrent={tableData.total}
+      />
     </>
   );
 };

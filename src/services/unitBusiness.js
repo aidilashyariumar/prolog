@@ -1,10 +1,10 @@
 import axios from '../helper/axios'
 
-const getAllUnitBusiness = async () => {
+const getAllUnitBusiness = async (currentPage = 1, perpage = 3) => {
 
     try {
 
-        const response = await axios.get('master/business-units?page=1&page_size=5')
+        const response = await axios.get(`master/business-units?page=${currentPage}&page_size=${perpage}`)
         return response.data
 
     } catch (e) {
@@ -36,11 +36,11 @@ const storeUnitBusiness = async (data) => {
 
 }
 
-const updateArmada = async (data) => {
+const updateUnitBusiness = async (data) => {
 
     try {
-
-        const response = await axios.put(`/masterdata/vehicle/${data.id}`, data)
+        // console.log(`${data.id}`)
+        const response = await axios.put(`/master/business-units/${data.id}`, data)
         return response.data
 
     } catch (e) {
@@ -49,11 +49,11 @@ const updateArmada = async (data) => {
 
 }
 
-const deletePengguna = async (id_user) => {
+const deleteUnitBusiness = async (id) => {
 
     try {
 
-        const response = await axios.delete(`/master/users/:id_user`)
+        const response = await axios.delete(`/master/business-units/${id}`)
         return response.data
 
     } catch (e) {
@@ -62,5 +62,5 @@ const deletePengguna = async (id_user) => {
 
 }
 
-export { getAllUnitBusiness,getAllUnitBusinessCategory, storeUnitBusiness, updateArmada, deletePengguna }
+export { getAllUnitBusiness,getAllUnitBusinessCategory, storeUnitBusiness, updateUnitBusiness, deleteUnitBusiness }
 
